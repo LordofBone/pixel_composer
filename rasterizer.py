@@ -137,7 +137,7 @@ class FrameBuffer:
 
 
 class ScreenDrawer:
-    def __init__(self, output_controller, buffer_refresh, session_info):
+    def __init__(self, output_controller, buffer_refresh, session_info, exit_text="Program Exited"):
         self.session_info = session_info
         self.hat_control = output_controller
         self.frame_refresh_delay_ms = 1 / buffer_refresh
@@ -146,6 +146,8 @@ class ScreenDrawer:
         self.frame_buffer_access = FrameBuffer(self.session_info)
 
         self.next_frame = time() + self.frame_refresh_delay_ms
+
+        self.exit_text = exit_text
 
         self.draw()
 
@@ -239,10 +241,7 @@ class ScreenDrawer:
 
         # upon keyboard interrupt display information about the program run before exiting
         except KeyboardInterrupt:
-            logger.info(
-                f'Program ended by user.\n Total life forms produced: {self.session_info.life_form_total_count}\n Max '
-                f'concurrent Lifeforms was: {self.session_info.highest_concurrent_lifeforms}\n Last count of active '
-                f'Lifeforms: {self.session_info.current_life_form_amount}')
+            logger.info(self.exit_text)
             self.frame_buffer_access.flush_buffer()
             self.buffer_scan()
 
