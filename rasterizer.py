@@ -1,3 +1,4 @@
+import string
 from time import time
 import logging
 from shaders import FullScreenPatternShader, PerPixelLightingShader, MotionBlurShader, \
@@ -241,7 +242,7 @@ class ScreenDrawer:
 
         # upon keyboard interrupt display information about the program run before exiting
         except KeyboardInterrupt:
-            logger.info(self.exit_text)
+            logger.info(logger.info(string.Template(self.exit_text).substitute(vars(self.session_info))))
             self.frame_buffer_access.flush_buffer()
             self.buffer_scan()
 
