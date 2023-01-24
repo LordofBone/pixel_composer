@@ -140,7 +140,7 @@ class FrameBuffer:
 class ScreenDrawer:
     def __init__(self, output_controller, buffer_refresh, session_info, exit_text="Program Exited"):
         self.session_info = session_info
-        self.hat_control = output_controller
+        self.output_controller = output_controller
         self.frame_refresh_delay_ms = 1 / buffer_refresh
         logger.debug(f'Milliseconds per-frame to aim for: {self.frame_refresh_delay_ms}')
 
@@ -179,7 +179,7 @@ class ScreenDrawer:
     def buffer_scan(self):
         [self.draw_to_output(coord, pixel) for coord, pixel in self.frame_buffer_access.return_buffer().items()]
 
-        self.hat_control.unicorn.show()
+        self.output_controller.show()
 
     def buffer_flip(self):
         self.frame_buffer_access.flip_buffers()
@@ -194,7 +194,7 @@ class ScreenDrawer:
         self.frame_buffer_access.render_render_plane_to_buffer()
 
     def draw_to_output(self, coord, pixel):
-        self.hat_control.draw_pixels(coord, pixel)
+        self.output_controller.draw_pixels(coord, pixel)
 
     def motion_blur_pass(self):
         # todo: convert this to list comprehension? and tidy it up
