@@ -8,31 +8,6 @@ from shaders import FullScreenPatternShader, PerPixelLightingShader, MotionBlurS
 logger = logging.getLogger("rasterizer-logger")
 
 
-class PreBuffer:
-    def __init__(self):
-        self.template_pre_buffer = {}
-
-        self.pre_buffer = {}
-        self.blank_pixel = (0.0, 0.0, 0.0), -1
-
-        self.buffer_ready = False
-
-    def write_to_buffer(self, pixel_coord, pixel_rgb, entity_id):
-        self.pre_buffer[pixel_coord] = pixel_rgb, entity_id
-
-    def get_from_buffer(self, pixel_coord):
-        try:
-            return self.pre_buffer[pixel_coord]
-        except KeyError:
-            return None
-
-    def del_buffer_pixel(self, coord):
-        try:
-            del self.pre_buffer[coord]
-        except KeyError:
-            pass
-
-
 class FrameBuffer:
     def __init__(self, session_info):
         self.front_buffer = {}
@@ -138,8 +113,10 @@ class FrameBuffer:
 
 
 class ScreenDrawer:
-    def __init__(self, output_controller, buffer_refresh, session_info, fixed_function=False, exit_text="Program Exited"):
+    def __init__(self, output_controller, buffer_refresh, session_info, fixed_function=False,
+                 exit_text="Program Exited"):
         self.session_info = session_info
+        self.world_space = session_info.world_space
         self.fixed_function = fixed_function
         self.output_controller = output_controller
         self.frame_refresh_delay_ms = 1 / buffer_refresh
@@ -160,7 +137,7 @@ class ScreenDrawer:
 
     def object_colour_pass(self):
         [self.frame_buffer_access.write_to_render_plane(coord, pixel[0]) for coord, pixel in
-         pre_buffer_access.pre_buffer.copy().items()]
+         self.world_space.pre_buffer.copy().items()]
 
     def background_shader_pass(self):
         [self.frame_buffer_access.write_to_render_plane(coord, self.frame_buffer_access.shader_stack.run_shader_stack(
@@ -239,7 +216,7 @@ class ScreenDrawer:
                     [getattr(self, render_stage)() for render_stage in render_stack]
                 else:
                     [self.draw_to_output(coord, pixel[0]) for coord, pixel in
-                     pre_buffer_access.pre_buffer.copy().items()]
+                     self.world_space.pre_buffer.copy().items()]
                     self.output_controller.show()
 
                 if time() > self.next_frame:
@@ -251,6 +228,3 @@ class ScreenDrawer:
             logger.info(logger.info(string.Template(self.exit_text).substitute(vars(self.session_info))))
             self.frame_buffer_access.flush_buffer()
             self.buffer_scan()
-
-
-pre_buffer_access = PreBuffer()
