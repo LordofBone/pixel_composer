@@ -116,7 +116,7 @@ class ScreenDrawer:
     def __init__(self, output_controller, buffer_refresh, session_info, fixed_function=False,
                  exit_text="Program Exited"):
         self.session_info = session_info
-        self.world_space = session_info.world_space
+        self.world_space_access = session_info.world_space_access
         self.fixed_function = fixed_function
         self.output_controller = output_controller
         self.frame_refresh_delay_ms = 1 / buffer_refresh
@@ -137,7 +137,7 @@ class ScreenDrawer:
 
     def object_colour_pass(self):
         [self.frame_buffer_access.write_to_render_plane(coord, pixel[0]) for coord, pixel in
-         self.world_space.pre_buffer.copy().items()]
+         self.world_space_access.world_space.copy().items()]
 
     def background_shader_pass(self):
         [self.frame_buffer_access.write_to_render_plane(coord, self.frame_buffer_access.shader_stack.run_shader_stack(
@@ -216,7 +216,7 @@ class ScreenDrawer:
                     [getattr(self, render_stage)() for render_stage in render_stack]
                 else:
                     [self.draw_to_output(coord, pixel[0]) for coord, pixel in
-                     self.world_space.pre_buffer.copy().items()]
+                     self.world_space_access.world_space.copy().items()]
                     self.output_controller.show()
 
                 if time() > self.next_frame:
