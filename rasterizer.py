@@ -113,11 +113,9 @@ class FrameBuffer:
 
 
 class ScreenDrawer:
-    def __init__(self, output_controller, buffer_refresh, session_info, fixed_function=False,
-                 exit_text="Program Exited"):
+    def __init__(self, output_controller, buffer_refresh, session_info, exit_text="Program Exited"):
         self.session_info = session_info
         self.world_space_access = session_info.world_space_access
-        self.fixed_function = fixed_function
         self.output_controller = output_controller
         self.frame_refresh_delay_ms = 1 / buffer_refresh
         logger.debug(f'Milliseconds per-frame to aim for: {self.frame_refresh_delay_ms}')
@@ -212,12 +210,7 @@ class ScreenDrawer:
 
         try:
             while True:
-                if not self.fixed_function:
-                    [getattr(self, render_stage)() for render_stage in render_stack]
-                else:
-                    [self.draw_to_output(coord, pixel) for coord, pixel in
-                     self.world_space_access.return_world_space().items()]
-                    self.output_controller.show()
+                [getattr(self, render_stage)() for render_stage in render_stack]
 
                 if time() > self.next_frame:
                     # todo: do something clever with buffer flipping here?
