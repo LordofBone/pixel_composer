@@ -240,6 +240,7 @@ class ScreenDrawer:
                 else:
                     [self.draw_to_output(coord, pixel[0]) for coord, pixel in
                      pre_buffer_access.pre_buffer.copy().items()]
+                    self.output_controller.show()
 
                 if time() > self.next_frame:
                     # todo: do something clever with buffer flipping here?
