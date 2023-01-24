@@ -137,7 +137,7 @@ class ScreenDrawer:
 
     def object_colour_pass(self):
         [self.frame_buffer_access.write_to_render_plane(coord, pixel) for coord, pixel in
-         self.world_space_access.return_world_space()]
+         self.world_space_access.return_world_space().items()]
 
     def background_shader_pass(self):
         [self.frame_buffer_access.write_to_render_plane(coord, self.frame_buffer_access.shader_stack.run_shader_stack(
@@ -216,7 +216,7 @@ class ScreenDrawer:
                     [getattr(self, render_stage)() for render_stage in render_stack]
                 else:
                     [self.draw_to_output(coord, pixel) for coord, pixel in
-                     self.world_space_access.return_world_space()]
+                     self.world_space_access.return_world_space().items()]
                     self.output_controller.show()
 
                 if time() > self.next_frame:
