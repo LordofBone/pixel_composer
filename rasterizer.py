@@ -215,7 +215,15 @@ class ScreenDrawer:
                 if time() > self.next_frame:
                     # todo: do something clever with buffer flipping here?
                     pass
-
+        # this is here so that if this is called as a thread it can be exited by passing in {"end": "ended"} into the
+        # world space dict from the main program, else if nonsense is passed in it will raise an error
+        except TypeError as e:
+            if next(iter(self.world_space_access.return_world_space())) == "end":
+                logger.info("Render thread purposely ended")
+                quit()
+            else:
+                logger.error(f"Type Error: {e}")
+                raise e
         # upon keyboard interrupt display information about the program run before exiting
         except KeyboardInterrupt:
             logger.info(logger.info(string.Template(self.exit_text).substitute(vars(self.session_info))))
