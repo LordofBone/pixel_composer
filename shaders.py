@@ -1,4 +1,5 @@
 import math
+import random
 from time import time
 
 
@@ -243,3 +244,39 @@ class FloatToRGBShader(ConfigurableShaderSuper):
         converted_pixel = self.convert_float_to_rgb(pixel)
 
         return converted_pixel
+
+
+class SpriteShader:
+    def __init__(self):
+        self.sprite = None
+        self.sprite_size = 3
+        self.sprite_position = (0, 0)
+
+    def star_sprite(self, coord):
+        grid = {}
+        for i in range(2 * self.sprite_size + 1):
+            for j in range(2 * self.sprite_size + 1):
+                if abs(i - self.sprite_size) + abs(j - self.sprite_size) <= self.sprite_size and abs(i - j) <= self.sprite_size:
+                    row = coord[0] - self.sprite_size + i
+                    col = coord[1] - self.sprite_size + j
+                    grid[row, col] = (255, 255, 255)
+        return grid
+
+    def lens_flare_sprite(self, coord):
+        grid = {}
+        for i in range(2 * self.sprite_size + 1):
+            for j in range(2 * self.sprite_size + 1):
+                if abs(i - self.sprite_size) + abs(j - self.sprite_size) <= self.sprite_size and abs(i - j) <= self.sprite_size:
+                    row = coord[0] - self.sprite_size + i
+                    col = coord[1] - self.sprite_size + j
+                    grid[row, col] = (255, 255, 255)
+                    for k in range(random.randint(1, self.sprite_size // 2)):
+                        offset_row = row + random.randint(-self.sprite_size // 2, self.sprite_size // 2)
+                        offset_col = col + random.randint(-self.sprite_size // 2, self.sprite_size // 2)
+                        if (offset_row, offset_col) not in grid:
+                            grid[offset_row, offset_col] = (255, 255, 255)
+        return grid
+
+    def run_shader(self, coord, pixel):
+        if pixel[0] > 220 and pixel[1] > 220 and pixel[2] > 220:
+            return self.lens_flare_sprite(coord)
