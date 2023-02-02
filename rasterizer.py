@@ -10,46 +10,28 @@ logger = logging.getLogger("rasterizer-logger")
 
 class FrameBuffer:
     def __init__(self, session_info):
+        self.session_info = session_info
+
         self.front_buffer = {}
         self.back_buffer = {}
-
-        self.texture_plane = {}
 
         self.render_plane = {}
 
         self.previous_frame = {}
 
-        self.session_info = session_info
-
-        self.current_buffer_front = True
         self.blank_pixel = (0.0, 0.0, 0.0)
 
-        self.shader_stack = ShaderStack(self.session_info)
-
-        # WARNING: be careful with these, it can cause flashing images
-        # self.shader_stack.multi_shader_creator(input_shader=FullScreenPatternShader, number_of_shaders=2, base_number=4,
-        #                                        base_addition=16, base_rgb=(1.25, 0.0, 0.0))
-        # self.shader_stack.add_to_shader_stack(
-        #     FullScreenPatternShader(count_number_max=32, shader_colour=(0.0, 1.25, 0.0)))
-        # self.shader_stack.add_to_shader_stack(
-        #     FullScreenPatternShader(count_number_max=31, shader_colour=(0.0, 0.0, 1.25)))
-
-        # self.shader_stack.add_to_shader_stack(
-        #     FullScreenPatternShader(count_number_max=7, shader_colour=(0.0, 1.0, 0.0)))
+        self.current_buffer_front = True
 
         self.motion_blur = MotionBlurShader()
 
-        self.motion_blur.shader_colour = (0.0, 0.0, 0.0)
-        self.motion_blur.static_shader_alpha = 0.9
-
         self.lighting = PerPixelLightingShader()
-        self.lighting.shader_colour = (1.0, 1.0, 1.0)
-        self.lighting.light_strength = 10.0
-        self.lighting.moving_light = False
 
         self.tone_map = ToneMapShader()
 
         self.float_to_rgb = FloatToRGBShader()
+
+        self.shader_stack = ShaderStack(self.session_info)
 
     def log_current_frame(self):
         self.previous_frame = self.render_plane.copy()
@@ -68,7 +50,7 @@ class FrameBuffer:
             pixel_rgb = self.render_plane[pixel_coord]
             return pixel_rgb
         except KeyError:
-            return 0.0, 0.0, 0.0
+            return self.blank_pixel
 
     def blit_render_plane_to_buffer(self):
         if self.current_buffer_front:
@@ -107,32 +89,18 @@ class FrameBuffer:
 
     def flush_buffer(self):
         self.render_plane = {}
-        self.texture_plane = {}
 
         if self.current_buffer_front:
             self.front_buffer = {}
         else:
             self.back_buffer = {}
 
-    def write_to_texture(self, pixel_coord, pixel_rgb):
-        if self.current_buffer_front:
-            self.texture_plane[pixel_coord] = pixel_rgb
-
-    def write_texture_to_buffer(self, coord, texture):
-        try:
-            for pixel_coord, texel in texture.items():
-                # print(f'Pixel Coord: {pixel_coord}, Texel: {texel}')
-                self.write_to_texture(pixel_coord, texel)
-        except TypeError:
-            pass
-        except AttributeError:
-            pass
-
 
 class ScreenDrawer:
     def __init__(self, output_controller, buffer_refresh, session_info, exit_text="Program Exited"):
         self.session_info = session_info
         self.world_space_access = session_info.world_space_access
+        self.render_stack = session_info.render_stack
         self.output_controller = output_controller
         self.frame_refresh_delay_ms = 1 / buffer_refresh
         logger.debug(f'Milliseconds per-frame to aim for: {self.frame_refresh_delay_ms}')
@@ -143,16 +111,15 @@ class ScreenDrawer:
 
         self.exit_text = exit_text
 
-        self.draw()
-
-    def sprite_pass(self):
-        [self.frame_buffer_access.write_texture_to_buffer(coord, self.frame_buffer_access.sprites.run_shader(coord, pixel)) for
-         coord, pixel in
-         self.frame_buffer_access.front_buffer.items()]
-
-    def write_texture(self):
-        [self.frame_buffer_access.write_to_buffer(coord, pixel)
-         for coord, pixel in self.frame_buffer_access.texture_plane.items()]
+        # you can get some different/cool effects by swapping things about here
+        self.render_stack = ['background_shader_pass',
+                             'object_colour_pass',
+                             'log_current_frame',
+                             'tone_map_pass',
+                             'render_frame_buffer',
+                             'float_to_rgb_pass',
+                             'buffer_scan',
+                             'flush_buffer']
 
     def float_to_rgb_pass(self):
         [self.frame_buffer_access.write_to_buffer(coord, self.frame_buffer_access.float_to_rgb.run_shader(pixel)) for
@@ -224,22 +191,9 @@ class ScreenDrawer:
         self.frame_buffer_access.flush_buffer()
 
     def draw(self):
-        # you can get some different/cool effects by swapping things about here
-        render_stack = ['background_shader_pass',
-                        'object_colour_pass',
-                        'log_current_frame',
-                        # 'lighting_pass',
-                        'tone_map_pass',
-                        'render_frame_buffer',
-                        'float_to_rgb_pass',
-                        # 'sprite_pass',
-                        # 'write_texture',
-                        'buffer_scan',
-                        'flush_buffer']
-
         try:
             while True:
-                [getattr(self, render_stage)() for render_stage in render_stack]
+                [getattr(self, render_stage)() for render_stage in self.render_stack]
 
                 if time() > self.next_frame:
                     # todo: do something clever with buffer flipping here?
