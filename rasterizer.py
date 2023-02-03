@@ -124,6 +124,8 @@ class ScreenDrawer:
                              'buffer_scan',
                              'flush_buffer']
 
+        self.rendering = True
+
     def float_to_rgb_pass(self):
         [self.frame_buffer_access.write_to_buffer(coord, self.frame_buffer_access.float_to_rgb.run_shader(pixel)) for
          coord, pixel in
@@ -196,11 +198,12 @@ class ScreenDrawer:
     def draw(self):
         try:
             while True:
-                [getattr(self, render_stage)() for render_stage in self.render_stack]
+                if self.rendering:
+                    [getattr(self, render_stage)() for render_stage in self.render_stack]
 
-                if time() > self.next_frame:
-                    # todo: do something clever with buffer flipping here?
-                    pass
+                    if time() > self.next_frame:
+                        # todo: do something clever with buffer flipping here?
+                        pass
         # this is here so that if this is called as a thread it can be exited by passing in {"end": "ended"} into the
         # world space dict from the main program, else if nonsense is passed in it will raise an error
         except TypeError as e:
