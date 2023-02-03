@@ -68,6 +68,8 @@ class ConfigurableShaderSuper:
         self.shader_colour = shader_colour
         self.static_shader_alpha = static_shader_alpha
 
+        self.float_clip_min = 0.1
+
     def calculate_distance(self, coord_1, coord_2):
         dist = math.sqrt((coord_2[0] - coord_1[0]) ** 2 + (coord_2[1] - coord_1[1]) ** 2)
         return round(dist)
@@ -227,7 +229,7 @@ class MotionBlurShader(ConfigurableShaderSuper):
             second_pixel = self.shader_colour
         shaded_colour = self.blend_colour_alpha(pixel, second_pixel, self.static_shader_alpha)
 
-        if sum(shaded_colour) > 0.1:
+        if sum(shaded_colour) > self.float_clip_min:
             return shaded_colour
         else:
             return None
