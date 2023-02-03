@@ -2,6 +2,10 @@ import math
 import random
 from time import time
 
+"""
+WARNING: be careful with this, it can cause flashing images
+"""
+
 
 class ShaderStack:
     def __init__(self, session_info):
