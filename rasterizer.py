@@ -7,6 +7,10 @@ from shaders import FullScreenPatternShader, PerPixelLightingShader, MotionBlurS
 
 logger = logging.getLogger("rasterizer-logger")
 
+"""
+WARNING: be careful with this, it can cause flashing images
+"""
+
 
 class FrameBuffer:
     def __init__(self, session_info):
