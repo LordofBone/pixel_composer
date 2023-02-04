@@ -124,8 +124,6 @@ class ScreenDrawer:
                              'buffer_scan',
                              'flush_buffer']
 
-        self.rendering = True
-
     def float_to_rgb_pass(self):
         [self.frame_buffer_access.write_to_buffer(coord, self.frame_buffer_access.float_to_rgb.run_shader(pixel)) for
          coord, pixel in
@@ -198,7 +196,7 @@ class ScreenDrawer:
     def draw(self):
         try:
             while True:
-                if self.rendering:
+                if self.session_info.rendering_on:
                     [getattr(self, render_stage)() for render_stage in self.render_stack]
 
                     if time() > self.next_frame:
