@@ -3,7 +3,7 @@ from time import time
 import logging
 from shaders import FullScreenPatternShader, PerPixelLightingShader, MotionBlurShader, \
     FullScreenGradientShader, \
-    FloatToRGBShader, ShaderStack, ToneMapShader
+    FloatToRGBShader, ShaderStack, ToneMapShader, SpriteShader
 
 logger = logging.getLogger("rasterizer-logger")
 
@@ -18,6 +18,8 @@ class FrameBuffer:
 
         self.front_buffer = {}
         self.back_buffer = {}
+
+        self.texture_plane = {}
 
         self.render_plane = {}
 
@@ -36,6 +38,8 @@ class FrameBuffer:
         self.float_to_rgb = FloatToRGBShader()
 
         self.shader_stack = ShaderStack(self.session_info)
+
+        self.sprites = SpriteShader()
 
     def log_current_frame(self):
         self.previous_frame = self.render_plane.copy()
@@ -94,10 +98,26 @@ class FrameBuffer:
     def flush_buffer(self):
         self.render_plane = {}
 
+        self.texture_plane = {}
+
         if self.current_buffer_front:
             self.front_buffer = {}
         else:
             self.back_buffer = {}
+
+    def write_to_texture(self, pixel_coord, pixel_rgb):
+        if self.current_buffer_front:
+            self.texture_plane[pixel_coord] = pixel_rgb
+
+    def write_texture_to_buffer(self, coord, texture):
+        try:
+            for pixel_coord, texel in texture.items():
+                # print(f'Pixel Coord: {pixel_coord}, Texel: {texel}')
+                self.write_to_texture(pixel_coord, texel)
+        except TypeError:
+            pass
+        except AttributeError:
+            pass
 
 
 class ScreenDrawer:
@@ -123,6 +143,15 @@ class ScreenDrawer:
                              'float_to_rgb_pass',
                              'buffer_scan',
                              'flush_buffer']
+
+    def sprite_pass(self):
+        [self.frame_buffer_access.write_texture_to_buffer(coord, self.frame_buffer_access.sprites.run_shader(coord,
+                                                                                                             pixel))
+         for coord, pixel in self.frame_buffer_access.front_buffer.items()]
+
+    def write_texture(self):
+        [self.frame_buffer_access.write_to_buffer(coord, pixel)
+         for coord, pixel in self.frame_buffer_access.texture_plane.items()]
 
     def float_to_rgb_pass(self):
         [self.frame_buffer_access.write_to_buffer(coord, self.frame_buffer_access.float_to_rgb.run_shader(pixel)) for
