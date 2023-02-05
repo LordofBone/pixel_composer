@@ -1,6 +1,8 @@
 import math
 import random
 from time import time
+import colorsys
+from dataclasses import dataclass
 
 """
 WARNING: be careful with this, it can cause flashing images
@@ -48,6 +50,43 @@ class ShaderStack:
             pixel_in = shader.run_shader(pixel_in)
 
         return pixel_in
+
+
+@dataclass
+class PerPixelGradientShader:
+    gradient_step: float
+    R: int = 0
+    G: int = 0
+    B: int = 0
+    hue: float = 0.0
+
+    def __post_init__(self):
+        self.random()
+
+    def step_gradient(self):
+        """
+        Step the gradient forward by the gradient step.
+        """
+        if self.hue < 1.0:
+            self.hue += self.gradient_step
+        else:
+            self.hue = 0.0
+        self.colour()
+
+    def colour(self):
+        """
+        Return RGB colours from converted hue
+        https://docs.python.org/2/library/colorsys.html
+        """
+        (r, g, b) = colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
+        self.R, self.G, self.B = int(255 * r), int(255 * g), int(255 * b)
+
+    def random(self):
+        """
+        Set a random colour.
+        """
+        self.hue = random.uniform(0.0, 1.0)
+        self.colour()
 
 
 # todo: split all this up into different classes for different shaders, built from a superclass
@@ -262,25 +301,31 @@ class SpriteShader:
         grid = {}
         for i in range(2 * self.sprite_size + 1):
             for j in range(2 * self.sprite_size + 1):
-                if abs(i - self.sprite_size) + abs(j - self.sprite_size) <= self.sprite_size and abs(i - j) <= self.sprite_size:
+                if abs(i - self.sprite_size) + abs(j - self.sprite_size) <= self.sprite_size and abs(
+                        i - j) <= self.sprite_size:
                     row = coord[0] - self.sprite_size + i
                     col = coord[1] - self.sprite_size + j
                     grid[row, col] = (255, 255, 255)
         return grid
 
     def lens_flare_sprite(self, coord):
+        lens_gradient = PerPixelGradientShader(gradient_step=0.001)
         grid = {}
         for i in range(2 * self.sprite_size + 1):
+            lens_gradient.step_gradient()
             for j in range(2 * self.sprite_size + 1):
-                if abs(i - self.sprite_size) + abs(j - self.sprite_size) <= self.sprite_size and abs(i - j) <= self.sprite_size:
+                lens_gradient.step_gradient()
+                if abs(i - self.sprite_size) + abs(j - self.sprite_size) <= self.sprite_size and abs(
+                        i - j) <= self.sprite_size:
                     row = coord[0] - self.sprite_size + i
                     col = coord[1] - self.sprite_size + j
                     grid[row, col] = (255, 255, 255)
                     for k in range(random.randint(1, self.sprite_size // 2)):
+                        lens_gradient.step_gradient()
                         offset_row = row + random.randint(-self.sprite_size // 2, self.sprite_size // 2)
                         offset_col = col + random.randint(-self.sprite_size // 2, self.sprite_size // 2)
                         if (offset_row, offset_col) not in grid:
-                            grid[offset_row, offset_col] = (255, 255, 255)
+                            grid[offset_row, offset_col] = (lens_gradient.R, lens_gradient.G, lens_gradient.B)
         return grid
 
     def run_shader(self, coord, pixel):
