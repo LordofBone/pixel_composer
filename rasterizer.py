@@ -121,9 +121,9 @@ class FrameBuffer:
 
 
 class ScreenDrawer:
-    def __init__(self, output_controller, buffer_refresh, session_info, exit_text="Program Exited"):
+    def __init__(self, output_controller, buffer_refresh, session_info, world_space, exit_text="Program Exited"):
         self.session_info = session_info
-        self.world_space_access = session_info.world_space_access
+        self.world_space_access = world_space
         self.output_controller = output_controller
         self.frame_refresh_delay_ms = 1 / buffer_refresh
         logger.debug(f'Milliseconds per-frame to aim for: {self.frame_refresh_delay_ms}')
