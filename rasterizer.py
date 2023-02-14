@@ -1,6 +1,7 @@
 import string
 from time import time
 import logging
+import itertools
 from shaders import FullScreenPatternShader, PerPixelLightingShader, MotionBlurShader, \
     FullScreenGradientShader, \
     FloatToRGBShader, ShaderStack, ToneMapShader, SpriteShader
@@ -10,7 +11,18 @@ logger = logging.getLogger("rasterizer-logger")
 """
 WARNING: be careful with this, it can cause flashing images
 """
+def timer(func):
+    def wrapper(*arg_in, **kw):
+        st = time()
+        out = func(*arg_in, **kw)
+        et = time()
 
+        elapsed_time = et - st
+        if elapsed_time > 0.0:
+            print(f'{func} Execution time:', elapsed_time, 'seconds')
+        return out
+
+    return wrapper
 
 class FrameBuffer:
     def __init__(self, session_info):
@@ -159,15 +171,29 @@ class ScreenDrawer:
          self.frame_buffer_access.front_buffer.items()]
 
     def object_colour_pass(self):
+        # [self.frame_buffer_access.write_to_render_plane(coord, pixel) for coord, pixel in
+        #  self.world_space_access.return_world_space().items()]
+        # items_list = list(self.world_space_access.return_world_space().items())
+
+        # [self.frame_buffer_access.write_to_render_plane(coord, pixel) for coord, pixel in list(self.world_space_access.return_world_space().items())[::1]]
+
+        new_dict = dict(list(self.world_space_access.return_world_space().items())[::16])
         [self.frame_buffer_access.write_to_render_plane(coord, pixel) for coord, pixel in
-         self.world_space_access.return_world_space().items()]
+         new_dict.items()]
+
+        # items = self.world_space_access.return_world_space().items()
+        # step = 64
+        # start = 0
+        # selected_items = itertools.islice(items, start, None, step)
+
+        # [self.frame_buffer_access.write_to_render_plane(coord, pixel) for coord, pixel in selected_items]
 
     def background_shader_pass(self):
         [self.frame_buffer_access.write_to_render_plane(coord, self.frame_buffer_access.shader_stack.run_shader_stack(
             self.frame_buffer_access.get_from_render_plane(coord)))
          for coord in
          self.session_info.coord_map]
-
+    # @timer
     def lighting_pass(self):
         [self.frame_buffer_access.write_to_render_plane(coord,
                                                         self.frame_buffer_access.lighting.run_shader(coord, pixel))
@@ -187,7 +213,6 @@ class ScreenDrawer:
 
     def log_current_frame(self):
         self.frame_buffer_access.log_current_frame()
-
     def blit_render_plane(self):
         self.frame_buffer_access.blit_render_plane_to_buffer()
 
@@ -221,10 +246,11 @@ class ScreenDrawer:
 
     def flush_buffer(self):
         self.frame_buffer_access.flush_buffer()
-
+    @timer
     def draw(self):
         try:
-            while True:
+            for i in (range(8192)):
+            # while True:
                 if self.session_info.rendering_on:
                     [getattr(self, render_stage)() for render_stage in self.render_stack]
 
