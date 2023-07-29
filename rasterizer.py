@@ -171,22 +171,8 @@ class ScreenDrawer:
          self.frame_buffer_access.front_buffer.items()]
 
     def object_colour_pass(self):
-        # [self.frame_buffer_access.write_to_render_plane(coord, pixel) for coord, pixel in
-        #  self.world_space_access.return_world_space().items()]
-        # items_list = list(self.world_space_access.return_world_space().items())
-
-        # [self.frame_buffer_access.write_to_render_plane(coord, pixel) for coord, pixel in list(self.world_space_access.return_world_space().items())[::1]]
-
-        new_dict = dict(list(self.world_space_access.return_world_space().items())[::16])
         [self.frame_buffer_access.write_to_render_plane(coord, pixel) for coord, pixel in
-         new_dict.items()]
-
-        # items = self.world_space_access.return_world_space().items()
-        # step = 64
-        # start = 0
-        # selected_items = itertools.islice(items, start, None, step)
-
-        # [self.frame_buffer_access.write_to_render_plane(coord, pixel) for coord, pixel in selected_items]
+         self.world_space_access.return_world_space().items()]
 
     def background_shader_pass(self):
         [self.frame_buffer_access.write_to_render_plane(coord, self.frame_buffer_access.shader_stack.run_shader_stack(
