@@ -2,7 +2,7 @@ import string
 from time import time
 import logging
 import itertools
-from shaders import FullScreenPatternShader, PerPixelLightingShader, MotionBlurShader, \
+from .shaders import FullScreenPatternShader, PerPixelLightingShader, MotionBlurShader, \
     FullScreenGradientShader, \
     FloatToRGBShader, ShaderStack, ToneMapShader, SpriteShader
 
