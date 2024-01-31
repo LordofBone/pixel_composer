@@ -1,8 +1,8 @@
+import colorsys
 import math
 import random
-from time import time
-import colorsys
 from dataclasses import dataclass
+from time import time
 
 """
 WARNING: be careful with this, it can cause flashing images

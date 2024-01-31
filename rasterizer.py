@@ -1,56 +1,28 @@
+import logging
 import string
 from time import time
-import logging
-import itertools
-from .shaders import FullScreenPatternShader, PerPixelLightingShader, MotionBlurShader, \
-    FullScreenGradientShader, \
-    FloatToRGBShader, ShaderStack, ToneMapShader, SpriteShader
+
+from .shaders import (FullScreenPatternShader, PerPixelLightingShader, MotionBlurShader, FullScreenGradientShader,
+                      FloatToRGBShader, ShaderStack, ToneMapShader, SpriteShader)
 
 logger = logging.getLogger("rasterizer-logger")
 
-"""
-WARNING: be careful with this, it can cause flashing images
-"""
-def timer(func):
-    def wrapper(*arg_in, **kw):
-        st = time()
-        out = func(*arg_in, **kw)
-        et = time()
-
-        elapsed_time = et - st
-        if elapsed_time > 0.0:
-            print(f'{func} Execution time:', elapsed_time, 'seconds')
-        return out
-
-    return wrapper
 
 class FrameBuffer:
     def __init__(self, session_info):
         self.session_info = session_info
-
         self.front_buffer = {}
         self.back_buffer = {}
-
         self.texture_plane = {}
-
         self.render_plane = {}
-
         self.previous_frame = {}
-
         self.blank_pixel = (0.0, 0.0, 0.0)
-
         self.current_buffer_front = True
-
         self.motion_blur = MotionBlurShader()
-
         self.lighting = PerPixelLightingShader()
-
         self.tone_map = ToneMapShader()
-
         self.float_to_rgb = FloatToRGBShader()
-
         self.shader_stack = ShaderStack(self.session_info)
-
         self.sprites = SpriteShader()
 
     def log_current_frame(self):
@@ -179,6 +151,7 @@ class ScreenDrawer:
             self.frame_buffer_access.get_from_render_plane(coord)))
          for coord in
          self.session_info.coord_map]
+
     # @timer
     def lighting_pass(self):
         [self.frame_buffer_access.write_to_render_plane(coord,
@@ -199,6 +172,7 @@ class ScreenDrawer:
 
     def log_current_frame(self):
         self.frame_buffer_access.log_current_frame()
+
     def blit_render_plane(self):
         self.frame_buffer_access.blit_render_plane_to_buffer()
 
@@ -232,11 +206,10 @@ class ScreenDrawer:
 
     def flush_buffer(self):
         self.frame_buffer_access.flush_buffer()
-    @timer
+
     def draw(self):
         try:
-            for i in (range(8192)):
-            # while True:
+            while True:
                 if self.session_info.rendering_on:
                     [getattr(self, render_stage)() for render_stage in self.render_stack]
 
